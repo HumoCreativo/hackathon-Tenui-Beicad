@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #020617; /* bg-slate-950 */
+    color: #f8fafc;
+  }
+}
+
+/* Monospace Utility */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar for Terminal Data Tables & Logs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Custom Bloomberg-style Pulse Effects */
+@keyframes emeraldPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 4px rgba(52, 211, 153, 0.1);
+  }
+}
+
+.animate-emerald-glow {
+  animation: emeraldPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes bluePulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.1);
+  }
+}
+
+.animate-blue-glow {
+  animation: bluePulse 3s infinite ease-in-out;
+}
+
+/* Custom Glassmorphism & High-tech Card Borders */
+.nexus-card {
+  background-color: #0f172a; /* bg-slate-900 */
+  border: 1px solid #1e293b; /* border-slate-800 */
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nexus-card:hover {
+  border-color: #334155; /* border-slate-700 */
+}
+
+/* Grid Background pattern */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(30, 41, 59, 0.2) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 41, 59, 0.2) 1px, transparent 1px);
+}
