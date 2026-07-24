@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS | Institutional RWA Tokenization Dashboard - Dual Dynamic Yield Simulator</title>
+    <meta name="description" content="NEXUS Web3 Institutional Investment Dashboard featuring Tenui Fiat Gateway, Carbon Credit Wallet, and Dual Dynamic Yield Simulator." />
+    
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              slate: {
+                950: '#020617',
+                900: '#0f172a',
+                800: '#1e293b',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- React & Babel CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+      body {
+        background-color: #020617;
+        color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+      }
+      .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #090d16;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1e293b;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #334155;
+      }
+      .nexus-card {
+        background-color: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .nexus-card:hover {
+        border-color: #334155;
+      }
+      .nexus-card-purple {
+        background-color: rgba(46, 16, 101, 0.25);
+        border: 1px solid rgba(168, 85, 247, 0.35);
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(46, 16, 101, 0.3);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .nexus-card-purple:hover {
+        border-color: rgba(192, 132, 252, 0.6);
+      }
+      .nexus-card-emerald {
+        background-color: rgba(6, 78, 59, 0.25);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.3);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .nexus-card-emerald:hover {
+        border-color: rgba(52, 211, 153, 0.6);
+      }
+      @keyframes emeraldPulse {
+        0%, 100% {
+          opacity: 1;
+          box-shadow: 0 0 14px rgba(52, 211, 153, 0.5);
+        }
+        50% {
+          opacity: 0.6;
+          box-shadow: 0 0 4px rgba(52, 211, 153, 0.15);
+        }
+      }
+      .animate-emerald-glow {
+        animation: emeraldPulse 2.5s infinite ease-in-out;
+      }
+      .bg-grid-pattern {
+        background-size: 32px 32px;
+        background-image: 
+          linear-gradient(to right, rgba(30, 41, 59, 0.25) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // Complete Translation Dictionary (EN / ES) matching TranslationKeys type
+      const TRANSLATIONS = {
+        es: {
+          langName: 'Español',
+          network: 'Polygon zkEVM Mainnet',
+          onchainid: 'ONCHAINID:',
+          verified: 'Verified',
+          mifid: '(MiFID II Compliant)',
+          smartAccount: 'Smart Account',
+          balanceLabel: 'Balance:',
+          hardBalance: '150,000 USDC',
+          gaslessTooltipTitle: 'Cuenta ERC-4337 Patrocinada',
+          gaslessTooltipDesc: 'Zero gas fees via Paymaster.',
+          totalGasSaved: 'Gas Total Ahorrado:',
+          
+          heroBadgeTrust: 'Fideicomiso Verificado ERC-3643',
+          heroTitle: 'Reactor de Plasma DMP 5.000 AP - Fideicomiso Serie A',
+          heroSubtitle: 'Desintegración molecular plasmática. Cero pasivos ambientales.',
+          targetApy: 'Rendimiento Net Objetivo',
+          sponsor: 'Entidad Patrocinadora',
+          plantCap: 'Capacidad de Planta',
+          valuation: 'Valuación de Serie',
+          distribution: 'Riel de Distribución',
+          
+          // Financial Hub & Tenui Gateway
+          financialHubTitle: 'Billetera y Pasarela Fiat Tenui',
+          financialHubDesc: 'Depósitos y retiros directos entre tu banco e infraestructura de smart contract.',
+          tabDeposit: 'Deposit (On-Ramp)',
+          tabWithdraw: 'Withdraw (Off-Ramp)',
+          depositInputLabel: 'Monto a Depositar (USD):',
+          depositBtnText: 'Wire Transfer via Tenui -> Mints USDC',
+          withdrawInputLabel: 'Monto a Retirar (USDC):',
+          selectBankLabel: 'Cuenta Bancaria Vinculada:',
+          withdrawBtnText: 'Withdraw Fiat via Tenui',
+          payoneerDisclaimer: 'Liquidated through Payoneer rails in 2-4 hours',
+
+          // Carbon Credit Wallet (Sub-section)
+          envYieldTitle: 'Rendimiento Ambiental (Créditos de Carbono)',
+          unclaimedCreditsTitle: 'Créditos de Carbono Sin Reclamar',
+          carbonWalletTitle: 'Billetera de Créditos de Carbono (ESG)',
+          carbonWalletDesc: 'Tokens de utilidad ambiental con mecanismo de desintegración temporal.',
+          unclaimedCreditsCount: '450 NCT-CARBON Tokens',
+          creditsValuation: 'Valor de Mercado: $13,500 USDC ($30 / Crédito)',
+          timeDecayWarningMsg: 'Warning: 450 Carbon Credits expire in 12 Days (Time-Decay mechanism)',
+          timeDecayDesc: 'Los tokens ambientales pierden valor con el tiempo para incentivar la compensación corporativa rápida.',
+          timeRemainingLabel: 'Tiempo Restante:',
+          burnForOffsetBtn: 'Burn for Offset',
+          tradeOnSecondaryBtn: 'Trade on Secondary',
+
+          // Dual Dynamic Yield Simulator
+          simulatorTitle: 'RWA Projection Engine (DMP 5.000 AP)',
+          simulatorDesc: 'Simulador dinámico dual que proyecta la rentabilidad en USDC y la generación de Créditos de Carbono.',
+          sliderLabel: 'Investment Horizon (Years)',
+          projectedApyLabel: 'Projected APY',
+          projectedApyUsdc: 'Projected APY (USDC)',
+          estCarbonGenerated: 'Estimated Carbon Credits Generated',
+          estCarbonGeneratedCo2t: 'Estimated Carbon Credits Generated',
+          estCumulativePayout: 'Pago Acumulado Estimado',
+
+          // Telemetry & Footer
+          telemetryHeader: 'Telemetría de Planta en Tiempo Real',
+          plasmaTemp: 'Plasma Temp:',
+          dioxinEmissions: 'Dioxin Emissions:',
+          telemetryFooterLine: 'Data validated on-chain via zk-SNARKs. Fiat Rails powered by Tenui',
+
+          closeBtn: 'Cerrar',
+          closeCert: 'Cerrar Certificado',
+          doneBtn: 'Volver al Portafolio',
+        },
+        en: {
+          langName: 'English',
+          network: 'Polygon zkEVM Mainnet',
+          onchainid: 'ONCHAINID:',
+          verified: 'Verified',
+          mifid: '(MiFID II Compliant)',
+          smartAccount: 'Smart Account',
+          balanceLabel: 'Balance:',
+          hardBalance: '150,000 USDC',
+          gaslessTooltipTitle: 'ERC-4337 Sponsored Account',
+          gaslessTooltipDesc: 'Zero gas fees via Paymaster.',
+          totalGasSaved: 'Total Gas Saved:',
+          
+          heroBadgeTrust: 'ERC-3643 Verified Trust',
+          heroTitle: 'DMP 5.000 AP Plasma Reactor - Series A Trust',
+          heroSubtitle: 'Plasma molecular disintegration. Zero environmental liabilities.',
+          targetApy: 'Target Net Dividend',
+          sponsor: 'Sponsor Entity',
+          plantCap: 'Plant Capacity',
+          valuation: 'Series Valuation',
+          distribution: 'Distribution Rail',
+          
+          // Financial Hub & Tenui Gateway
+          financialHubTitle: 'Wallet & Tenui Fiat Gateway',
+          financialHubDesc: 'Direct institutional on/off ramp between bank accounts and smart contracts.',
+          tabDeposit: 'Deposit (On-Ramp)',
+          tabWithdraw: 'Withdraw (Off-Ramp)',
+          depositInputLabel: 'Deposit Amount (USD):',
+          depositBtnText: 'Wire Transfer via Tenui -> Mints USDC',
+          withdrawInputLabel: 'Withdraw Amount (USDC):',
+          selectBankLabel: 'Linked Bank Account:',
+          withdrawBtnText: 'Withdraw Fiat via Tenui',
+          payoneerDisclaimer: 'Liquidated through Payoneer rails in 2-4 hours',
+
+          // Carbon Credit Wallet (Sub-section)
+          envYieldTitle: 'Environmental Yield (Carbon Credits)',
+          unclaimedCreditsTitle: 'Unclaimed Carbon Credits',
+          carbonWalletTitle: 'Carbon Credit Wallet (ESG)',
+          carbonWalletDesc: 'Active environmental utility tokens with time-decay mechanism.',
+          unclaimedCreditsCount: '450 NCT-CARBON Tokens',
+          creditsValuation: 'Est. Market Value: $13,500 USDC ($30 / Credit)',
+          timeDecayWarningMsg: 'Warning: 450 Carbon Credits expire in 12 Days (Time-Decay mechanism)',
+          timeDecayDesc: 'Environmental utility tokens decay over time to incentivize rapid corporate carbon offsetting.',
+          timeRemainingLabel: 'Time Remaining:',
+          burnForOffsetBtn: 'Burn for Offset',
+          tradeOnSecondaryBtn: 'Trade on Secondary',
+
+          // Dual Dynamic Yield Simulator
+          simulatorTitle: 'RWA Projection Engine (DMP 5.000 AP)',
+          simulatorDesc: 'Interactive Dual Dynamic Yield Simulator projecting both USDC profitability and Carbon Credit generation.',
+          sliderLabel: 'Investment Horizon (Years)',
+          projectedApyLabel: 'Projected APY',
+          projectedApyUsdc: 'Projected APY (USDC)',
+          estCarbonGenerated: 'Estimated Carbon Credits Generated',
+          estCarbonGeneratedCo2t: 'Estimated Carbon Credits Generated',
+          estCumulativePayout: 'Estimated Cumulative Payout',
+
+          // Telemetry & Footer
+          telemetryHeader: 'Real-Time Operational Telemetry',
+          plasmaTemp: 'Plasma Temp:',
+          dioxinEmissions: 'Dioxin Emissions:',
+          telemetryFooterLine: 'Data validated on-chain via zk-SNARKs. Fiat Rails powered by Tenui',
+
+          closeBtn: 'Close',
+          closeCert: 'Close Certificate',
+          doneBtn: 'Return to Portfolio',
+        }
+      };
+
+      // --- Component 1: Global Header ---
+      const Header = ({ lang, setLang, t, smartAccount, onOpenSmartAccountModal, onOpenComplianceModal }) => {
+        const [showTooltip, setShowTooltip] = useState(false);
+
+        return (
+          <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3">
+            <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+              
+              {/* Left: "NEXUS" & Language Switcher */}
+              <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-start">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src="./nexus-logo.png"
+                    alt="NEXUS Brand Logo"
+                    className="h-10 w-auto rounded-xl object-contain border border-emerald-500/40 shadow-lg shadow-emerald-950/50 hover:border-emerald-400 transition-all"
+                  />
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-black text-2xl tracking-widest text-slate-100 uppercase">NEXUS</span>
+                      <span className="text-[10px] uppercase font-mono font-semibold tracking-wider px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 border border-blue-800">
+                        RWA Engine
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      <span>{t.network}</span>
+                      <span className="text-slate-600">|</span>
+                      <span>Beicad Trust #4801</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 p-1 rounded-lg font-mono text-xs">
+                  <button
+                    onClick={() => setLang('es')}
+                    className={`px-2.5 py-1 rounded-md font-bold transition-all ${
+                      lang === 'es' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    ES
+                  </button>
+                  <button
+                    onClick={() => setLang('en')}
+                    className={`px-2.5 py-1 rounded-md font-bold transition-all ${
+                      lang === 'en' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    EN
+                  </button>
+                </div>
+              </div>
+
+              {/* Center: Security badge ONCHAINID: Verified (MiFID II Compliant) */}
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={onOpenComplianceModal}
+                  className="group relative flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-slate-900 border border-emerald-500/40 hover:border-emerald-400/80 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                >
+                  <div className="relative">
+                    <i data-lucide="shield-check" className="w-4 h-4 text-emerald-400"></i>
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-emerald-glow"></span>
+                  </div>
+                  <div className="flex items-center space-x-1.5 text-xs font-mono">
+                    <span className="font-bold text-slate-100">{t.onchainid}</span>
+                    <span className="text-emerald-400 font-bold">{t.verified}</span>
+                    <span className="text-slate-500">|</span>
+                    <span className="text-slate-300 font-normal">{t.mifid}</span>
+                  </div>
+                  <span className="text-xs text-slate-500 group-hover:text-emerald-400 transition-colors">→</span>
+                </button>
+              </div>
+
+              {/* Right: "Smart Account" showing Balance: 150,000 USDC & Tooltip */}
+              <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
+                <div className="relative">
+                  <button
+                    onClick={onOpenSmartAccountModal}
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className="flex items-center space-x-3 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer group shadow-md"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-900/30 border border-blue-500/30 flex items-center justify-center">
+                      <i data-lucide="wallet" className="w-4 h-4 text-blue-400"></i>
+                    </div>
+
+                    <div className="text-left">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wider">
+                          {t.smartAccount}
+                        </span>
+                        <span className="text-[9px] font-mono font-semibold px-1 rounded bg-blue-950 text-blue-400 border border-blue-800">
+                          ERC-4337
+                        </span>
+                      </div>
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-xs text-slate-400 font-mono">{t.balanceLabel}</span>
+                        <span className="text-sm font-bold font-mono text-slate-100 tracking-tight">
+                          {smartAccount.balanceUSDC.toLocaleString()}
+                        </span>
+                        <span className="text-[11px] font-mono text-blue-400 font-semibold">USDC</span>
+                      </div>
+                    </div>
+
+                    <i data-lucide="zap" className="w-4 h-4 text-emerald-400 animate-pulse ml-1"></i>
+                  </button>
+
+                  {/* Required Tooltip: "Zero gas fees via Paymaster." */}
+                  {showTooltip && (
+                    <div className="absolute right-0 top-full mt-2 w-80 p-3.5 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl text-xs text-slate-200 z-50 animate-in fade-in duration-150">
+                      <div className="flex items-start space-x-2.5">
+                        <i data-lucide="zap" className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <div>
+                          <p className="font-bold text-slate-100 text-xs">{t.gaslessTooltipTitle}</p>
+                          <p className="text-slate-300 mt-1 text-[11px] leading-relaxed">
+                            {t.gaslessTooltipDesc}
+                          </p>
+                          <div className="mt-2 pt-2 border-t border-slate-800 flex justify-between text-[10px] font-mono text-slate-400">
+                            <span>{t.totalGasSaved}</span>
+                            <span className="text-emerald-400 font-bold">${smartAccount.totalGasSavedUSDC.toFixed(2)} USDC</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </header>
+        );
+      };
+
+      // --- Component 2: Hero Asset Card ---
+      const HeroAssetCard = ({ t }) => {
+        return (
+          <div className="nexus-card p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-blue-950 text-blue-400 border border-blue-800">
+                    RWA Preferred Series A
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    ✓ {t.heroBadgeTrust}
+                  </span>
+                </div>
+                
+                <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-100 tracking-tight">
+                  {t.heroTitle}
+                </h1>
+                <p className="text-sm text-slate-400 font-medium mt-1">
+                  {t.heroSubtitle}
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-3 self-start lg:self-center shrink-0">
+                <div className="bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-xl text-right">
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">{t.targetApy}</div>
+                  <div className="text-2xl font-black font-mono text-emerald-400">14.1% APY Max</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-5">
+              <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl">
+                <div className="text-slate-400 text-xs font-mono mb-1">{t.sponsor}</div>
+                <div className="font-bold text-slate-100 text-sm">Beicad Energy</div>
+                <div className="text-[11px] text-slate-500 font-mono">Infrastructure S.A.</div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl">
+                <div className="text-slate-400 text-xs font-mono mb-1">{t.plantCap}</div>
+                <div className="font-bold text-slate-100 text-sm">5,000 AP</div>
+                <div className="text-[11px] text-amber-400 font-mono">&gt;5,000°C Molecular Arc</div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl">
+                <div className="text-slate-400 text-xs font-mono mb-1">{t.valuation}</div>
+                <div className="font-bold font-mono text-slate-100 text-sm">$45,000,000 USDC</div>
+                <div className="text-[11px] text-slate-500 font-mono">$15M Tokenized Series A</div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-xl">
+                <div className="text-slate-400 text-xs font-mono mb-1">{t.distribution}</div>
+                <div className="font-bold text-slate-100 text-sm">Tenui Instant Rails</div>
+                <div className="text-[11px] text-purple-400 font-mono">Automated Smart Contract</div>
+              </div>
+            </div>
+
+          </div>
+        );
+      };
+
+      // --- Component 3: Financial Hub & Gateway (Left Column - 50%) ---
+      const TenuiFiatGateway = ({ t, smartAccount, onDepositSubmit, onWithdrawSubmit, onBurnOffset }) => {
+        const [activeTab, setActiveTab] = useState('deposit');
+        const [depositAmount, setDepositAmount] = useState('50000');
+        const [withdrawAmount, setWithdrawAmount] = useState('25000');
+        const [selectedBank, setSelectedBank] = useState('J.P. Morgan Luxembourg S.A. (IBAN LU89...2938)');
+
+        // Time-decay countdown timer
+        const [secondsLeft, setSecondsLeft] = useState(12 * 86400 - 3612);
+        useEffect(() => {
+          const interval = setInterval(() => setSecondsLeft((prev) => Math.max(0, prev - 1)), 1000);
+          return () => clearInterval(interval);
+        }, []);
+        const days = Math.floor(secondsLeft / 86400);
+        const hours = Math.floor((secondsLeft % 86400) / 3600);
+        const minutes = Math.floor((secondsLeft % 3600) / 60);
+
+        return (
+          <div className="space-y-6">
+            
+            {/* Tenui Fiat Gateway Card */}
+            <div className="nexus-card p-6 border-blue-900/40 relative">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="landmark" className="w-5 h-5 text-blue-400"></i>
+                    <span>{t.financialHubTitle}</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    {t.financialHubDesc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-5 flex p-1 bg-slate-950 rounded-xl border border-slate-800 font-sans text-sm font-bold">
+                <button
+                  onClick={() => setActiveTab('deposit')}
+                  className={`flex-1 py-3 rounded-lg transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+                    activeTab === 'deposit'
+                      ? 'bg-blue-600 text-blue-50 shadow-md shadow-blue-600/30 font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <i data-lucide="arrow-down-left" className="w-4 h-4 text-emerald-400"></i>
+                  <span>{t.tabDeposit}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('withdraw')}
+                  className={`flex-1 py-3 rounded-lg transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+                    activeTab === 'withdraw'
+                      ? 'bg-blue-600 text-blue-50 shadow-md shadow-blue-600/30 font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <i data-lucide="arrow-up-right" className="w-4 h-4 text-blue-300"></i>
+                  <span>{t.tabWithdraw}</span>
+                </button>
+              </div>
+
+              {activeTab === 'deposit' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-300">
+                    <label>{t.depositInputLabel}</label>
+                    <span className="text-slate-400">Balance: <strong className="text-slate-100 font-bold">{smartAccount.balanceUSDC.toLocaleString()} USDC</strong></span>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                      placeholder="50,000"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-4 py-3.5 text-lg font-mono font-bold text-slate-100 outline-none pr-24"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-slate-400 px-2 py-1 bg-slate-900 rounded border border-slate-800">
+                      USD ($)
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => onDepositSubmit(parseFloat(depositAmount) || 0)}
+                    className="w-full py-4 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-blue-50 font-bold font-sans text-base transition-all flex items-center justify-center space-x-2.5 shadow-xl shadow-blue-600/30 active:scale-[0.99] cursor-pointer"
+                  >
+                    <i data-lucide="credit-card" className="w-5 h-5 text-blue-100"></i>
+                    <span>{t.depositBtnText}</span>
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'withdraw' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-300">
+                    <label>{t.withdrawInputLabel}</label>
+                    <span className="text-slate-400">Available: <strong className="text-slate-100 font-bold">{smartAccount.balanceUSDC.toLocaleString()} USDC</strong></span>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                      placeholder="25,000"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-4 py-3.5 text-lg font-mono font-bold text-slate-100 outline-none pr-24"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-slate-400 px-2 py-1 bg-slate-900 rounded border border-slate-800">
+                      USDC
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 font-mono text-xs">
+                    <label className="text-slate-400">{t.selectBankLabel}</label>
+                    <select
+                      value={selectedBank}
+                      onChange={(e) => setSelectedBank(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl p-3 font-mono text-xs font-bold outline-none cursor-pointer"
+                    >
+                      <option value="J.P. Morgan Luxembourg S.A. (IBAN LU89...2938)">J.P. Morgan Luxembourg S.A. (IBAN LU89...2938)</option>
+                      <option value="Sygnum Bank AG (CH93...8492)">Sygnum Bank AG (CH93...8492)</option>
+                      <option value="Payoneer Corporate Escrow Account (#48910)">Payoneer Corporate Escrow Account (#48910)</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => onWithdrawSubmit(parseFloat(withdrawAmount) || 0)}
+                    className="w-full py-4 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-blue-50 font-bold font-sans text-base transition-all flex items-center justify-center space-x-2.5 shadow-xl shadow-blue-600/30 active:scale-[0.99] cursor-pointer"
+                  >
+                    <i data-lucide="arrow-up-right" className="w-5 h-5 text-blue-100"></i>
+                    <span>{t.withdrawBtnText}</span>
+                  </button>
+
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] font-mono text-slate-400 flex items-center space-x-2">
+                    <i data-lucide="clock" className="w-4 h-4 text-purple-400 shrink-0"></i>
+                    <span>Disclaimer: {t.payoneerDisclaimer}.</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sub-section: Carbon Credit Wallet */}
+            <div className="nexus-card-emerald p-5 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-emerald-500/30">
+                <div className="flex items-center space-x-2">
+                  <i data-lucide="leaf" className="w-4 h-4 text-emerald-400"></i>
+                  <span className="font-bold text-slate-100 text-sm">{t.carbonWalletTitle}</span>
+                </div>
+                <span className="text-[11px] font-mono text-emerald-400 font-bold">{t.unclaimedCreditsCount}</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 space-y-1.5">
+                <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs font-mono">
+                  <i data-lucide="alert-triangle" className="w-3.5 h-3.5 text-amber-400 animate-bounce"></i>
+                  <span>{t.timeDecayWarningMsg}</span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 pt-1">
+                  <span>{t.timeRemainingLabel}</span>
+                  <span className="font-bold text-amber-400">{days}d {hours}h {minutes}m</span>
+                </div>
+              </div>
+
+              <button
+                onClick={onBurnOffset}
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-900/40 hover:bg-emerald-900/70 border border-emerald-500/50 text-emerald-400 font-sans text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm"
+              >
+                <i data-lucide="flame" className="w-4 h-4 text-emerald-400"></i>
+                <span>{t.burnForOffsetBtn}</span>
+              </button>
+            </div>
+
+          </div>
+        );
+      };
+
+      // --- Component 4: Dual Dynamic Yield Simulator (Right Column - 50%) ---
+      const DualYieldSimulator = ({ t }) => {
+        const [horizonYears, setHorizonYears] = useState(5);
+
+        // Dynamic USDC APY (text-purple-400)
+        const dynamicUsdcApy = Number((8.5 + (horizonYears - 1) * (5.6 / 9)).toFixed(1));
+        // Dynamic Carbon Credit Generation (text-emerald-400)
+        const carbonGeneratedCo2t = Math.round(150 + (horizonYears - 1) * (1650 / 9));
+        const estPayout = Math.round(150000 * (dynamicUsdcApy / 100) * horizonYears);
+
+        return (
+          <div className="nexus-card-purple p-6 relative overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-purple-500/30">
+              <div>
+                <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 text-[10px] font-mono font-bold uppercase">
+                  Dual Projection Engine
+                </span>
+                <h2 className="text-lg font-bold text-slate-100 tracking-tight flex items-center gap-2 mt-1">
+                  <i data-lucide="sliders" className="w-5 h-5 text-purple-400"></i>
+                  <span>{t.simulatorTitle}</span>
+                </h2>
+              </div>
+            </div>
+
+            {/* Custom Range Slider Labeled: "Investment Horizon (Years)" (Range 1 to 10) */}
+            <div className="mt-5 space-y-4">
+              <div className="p-4 rounded-xl bg-slate-950 border border-purple-900/50 space-y-3">
+                <div className="flex justify-between items-center font-mono text-xs">
+                  <label className="text-slate-300 font-bold">{t.sliderLabel}</label>
+                  <span className="text-lg font-extrabold text-purple-400 px-3 py-0.5 bg-purple-950 rounded border border-purple-800">
+                    {horizonYears} {horizonYears === 1 ? 'Year' : 'Years'}
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={horizonYears}
+                  onChange={(e) => setHorizonYears(parseInt(e.target.value))}
+                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                />
+
+                <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                  <span>1 Year</span>
+                  <span>5 Years</span>
+                  <span>10 Years</span>
+                </div>
+              </div>
+
+              {/* Dual Metrics Display: text-purple-400 for USDC APY & text-emerald-400 for Carbon Credits */}
+              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
+                
+                {/* Metric 1: Projected APY (USDC) in text-purple-400 */}
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <div className="text-[10px] text-slate-400 mb-1">{t.projectedApyUsdc}</div>
+                  <div className="text-2xl font-black text-purple-400 tracking-tight">
+                    {dynamicUsdcApy}% APY
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Amortized Yield</div>
+                </div>
+
+                {/* Metric 2: Estimated Carbon Credits Generated in text-emerald-400 */}
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <div className="text-[10px] text-slate-400 mb-1">{t.estCarbonGeneratedCo2t}</div>
+                  <div className="text-2xl font-black text-emerald-400 tracking-tight flex items-center gap-1">
+                    <i data-lucide="leaf" className="w-4 h-4 text-emerald-400"></i>
+                    <span>{carbonGeneratedCo2t} CO₂t</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Time-Decay Utility</div>
+                </div>
+
+              </div>
+
+              {/* Dual-Axis Yield Graph: Blue area for USDC yield, Emerald line for Carbon Credits */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded bg-blue-500"></span> USDC Yield
+                    <span className="w-2.5 h-2.5 rounded bg-emerald-400 ml-1"></span> Carbon CO₂t
+                  </span>
+                  <span className="font-bold text-purple-400">Payout: ${estPayout.toLocaleString()} USDC</span>
+                </div>
+
+                <div className="h-32 w-full relative pt-2">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Blue Area Graph for USDC yield trajectory */}
+                    <path
+                      d={`M 0,80 Q 150,${80 - horizonYears * 5} 300,${80 - horizonYears * 6.5} L 300,90 L 0,90 Z`}
+                      fill="url(#blueGrad)"
+                    />
+                    <path
+                      d={`M 0,80 Q 150,${80 - horizonYears * 5} 300,${80 - horizonYears * 6.5}`}
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="2.5"
+                    />
+
+                    {/* Emerald Line Graph for Carbon Credits accumulated */}
+                    <path
+                      d={`M 0,85 Q 150,${85 - horizonYears * 6} 300,${85 - horizonYears * 7.5}`}
+                      fill="none"
+                      stroke="#34d399"
+                      strokeWidth="3"
+                      strokeDasharray="4 2"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      };
+
+      // --- Component 5: Telemetry Footer ---
+      const TelemetryFooter = ({ t, onOpenZkProofModal }) => {
+        const [temp, setTemp] = useState(5240);
+
+        useEffect(() => {
+          const interval = setInterval(() => {
+            setTemp(prev => Math.max(5150, Math.min(5400, prev + Math.floor(Math.random() * 30) - 15)));
+          }, 3500);
+          return () => clearInterval(interval);
+        }, []);
+
+        return (
+          <footer className="mt-8 border-t border-slate-800 bg-slate-950/95 py-6 px-4 lg:px-8">
+            <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs">
+              
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <i data-lucide="flame" className="w-4 h-4 text-amber-400 animate-pulse"></i>
+                  <span className="text-slate-400">{t.plasmaTemp}</span>
+                  <span className="font-bold text-amber-400 font-mono">&gt;{temp.toLocaleString()}°C</span>
+                </div>
+
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-900/30 border border-emerald-500/40">
+                  <i data-lucide="shield" className="w-4 h-4 text-emerald-400"></i>
+                  <span className="text-emerald-300">{t.dioxinEmissions}</span>
+                  <span className="font-black text-emerald-400 font-mono">0%</span>
+                </div>
+              </div>
+
+              {/* Required Footer Line: "Data validated on-chain via zk-SNARKs. Fiat Rails powered by Tenui" */}
+              <div className="flex items-center space-x-3 text-slate-400 text-[11px]">
+                <button
+                  onClick={onOpenZkProofModal}
+                  className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <i data-lucide="file-code" className="w-3.5 h-3.5 text-emerald-400"></i>
+                  <span className="font-semibold text-slate-200">{t.telemetryFooterLine}</span>
+                </button>
+              </div>
+
+            </div>
+          </footer>
+        );
+      };
+
+      // --- Modals ---
+      const SmartAccountModal = ({ t, isOpen, onClose, smartAccount }) => {
+        if (!isOpen) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="nexus-card w-full max-w-lg p-6 border-blue-900/60 shadow-2xl space-y-4 font-mono text-xs">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3 font-sans">
+                <h3 className="text-lg font-bold text-slate-100">Smart Account (ERC-4337)</h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <div className="text-[10px] text-slate-500 uppercase">Address</div>
+                <div className="text-slate-100 font-bold break-all">{smartAccount.address}</div>
+              </div>
+              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1.5">
+                <div className="flex justify-between"><span className="text-slate-400">Paymaster:</span><span className="text-blue-400 font-bold">NEXUS Paymaster</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Total Gas Saved:</span><span className="text-emerald-400 font-bold">${smartAccount.totalGasSavedUSDC.toFixed(2)} USDC</span></div>
+              </div>
+              <div className="flex justify-end pt-2 font-sans">
+                <button onClick={onClose} className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs">{t.closeBtn}</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const ComplianceModal = ({ t, isOpen, onClose }) => {
+        if (!isOpen) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="nexus-card w-full max-w-lg p-6 border-emerald-500/50 shadow-2xl space-y-4 font-mono text-xs">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3 font-sans">
+                <h3 className="text-lg font-bold text-slate-100">ONCHAINID Certificate</h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1.5">
+                <div className="flex justify-between"><span className="text-slate-400">Status:</span><span className="text-emerald-400 font-bold">MiFID II Compliant</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Token Standard:</span><span className="text-blue-400 font-bold">ERC-3643 Verified</span></div>
+              </div>
+              <div className="flex justify-end pt-2 font-sans">
+                <button onClick={onClose} className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs">{t.closeCert}</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const ZkProofModal = ({ t, isOpen, onClose }) => {
+        if (!isOpen) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="nexus-card w-full max-w-lg p-6 border-emerald-500/50 shadow-2xl space-y-4 font-mono text-xs">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3 font-sans">
+                <h3 className="text-lg font-bold text-slate-100">zk-SNARK Proof Inspector</h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <div className="text-[10px] text-slate-500 uppercase">Groth16 Proof Hash</div>
+                <div className="text-emerald-400 font-bold break-all">0x8f93a1c9e4210948b812f8832a104f7621c9a1038b762c99a01f4a90d8102bc9</div>
+              </div>
+              <div className="flex justify-end pt-2 font-sans">
+                <button onClick={onClose} className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs">{t.closeBtn}</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const BurnOffsetModal = ({ t, isOpen, onClose }) => {
+        if (!isOpen) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+            <div className="nexus-card-emerald w-full max-w-lg p-6 border-emerald-500/60 shadow-2xl space-y-4 font-mono text-xs">
+              <div className="flex justify-between items-center border-b border-emerald-500/30 pb-3 font-sans">
+                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <i data-lucide="flame" className="w-5 h-5 text-emerald-400"></i>
+                  <span>Burn for Carbon Offset</span>
+                </h3>
+                <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-emerald-500/30 space-y-2">
+                <div className="text-slate-300">Retiring <strong>450 NCT-CARBON Tokens</strong></div>
+                <div className="text-emerald-400 font-bold">Generated Proof: 450 Metric Tons CO₂ Permanently Retired</div>
+                <div className="text-[10px] text-slate-500">Attestation: Polygon zkEVM Carbon Verifier #0x712a...</div>
+              </div>
+
+              <div className="flex justify-end pt-2 font-sans">
+                <button onClick={onClose} className="px-5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs">Confirm Offset Retirement</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // --- Main App Root Component ---
+      const App = () => {
+        const [lang, setLang] = useState('es');
+        const t = TRANSLATIONS[lang];
+
+        const [smartAccount, setSmartAccount] = useState({
+          address: '0x71C84A92e59124419918237D9104A1F8293949A2',
+          balanceUSDC: 150000,
+          rwaTokensHeld: 150000,
+          paymasterSponsorName: 'NEXUS Gasless Paymaster v4',
+          totalGasSavedUSDC: 1420.50,
+          userOpsExecuted: 48,
+        });
+
+        const [isSmartAccountOpen, setIsSmartAccountOpen] = useState(false);
+        const [isComplianceOpen, setIsComplianceOpen] = useState(false);
+        const [isZkProofOpen, setIsZkProofOpen] = useState(false);
+        const [isBurnOffsetOpen, setIsBurnOffsetOpen] = useState(false);
+
+        useEffect(() => {
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
+        });
+
+        const handleDepositSubmit = (amount) => {
+          setSmartAccount((prev) => ({
+            ...prev,
+            balanceUSDC: prev.balanceUSDC + amount,
+          }));
+        };
+
+        const handleWithdrawSubmit = (amount) => {
+          setSmartAccount((prev) => ({
+            ...prev,
+            balanceUSDC: Math.max(0, prev.balanceUSDC - amount),
+          }));
+        };
+
+        return (
+          <div className="min-h-screen bg-slate-950 text-slate-100 bg-grid-pattern flex flex-col justify-between">
+            <div>
+              <Header
+                lang={lang}
+                setLang={setLang}
+                t={t}
+                smartAccount={smartAccount}
+                onOpenSmartAccountModal={() => setIsSmartAccountOpen(true)}
+                onOpenComplianceModal={() => setIsComplianceOpen(true)}
+              />
+
+              <main className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+                <HeroAssetCard t={t} />
+
+                {/* 50% Left Column Financial Hub (Tenui Gateway + Carbon Wallet), 50% Right Column Dual Dynamic Yield Simulator */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* Left Column (50% - lg:col-span-6) */}
+                  <div className="lg:col-span-6 space-y-6">
+                    <TenuiFiatGateway
+                      t={t}
+                      smartAccount={smartAccount}
+                      onDepositSubmit={handleDepositSubmit}
+                      onWithdrawSubmit={handleWithdrawSubmit}
+                      onBurnOffset={() => setIsBurnOffsetOpen(true)}
+                    />
+                  </div>
+
+                  {/* Right Column (50% - lg:col-span-6) */}
+                  <div className="lg:col-span-6 space-y-6">
+                    <DualYieldSimulator t={t} />
+                  </div>
+
+                </div>
+              </main>
+            </div>
+
+            {/* Telemetry Footer */}
+            <TelemetryFooter t={t} onOpenZkProofModal={() => setIsZkProofOpen(true)} />
+
+            {/* Interactive Modals */}
+            <SmartAccountModal t={t} isOpen={isSmartAccountOpen} onClose={() => setIsSmartAccountOpen(false)} smartAccount={smartAccount} />
+            <ComplianceModal t={t} isOpen={isComplianceOpen} onClose={() => setIsComplianceOpen(false)} />
+            <ZkProofModal t={t} isOpen={isZkProofOpen} onClose={() => setIsZkProofOpen(false)} />
+            <BurnOffsetModal t={t} isOpen={isBurnOffsetOpen} onClose={() => setIsBurnOffsetOpen(false)} />
+          </div>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
